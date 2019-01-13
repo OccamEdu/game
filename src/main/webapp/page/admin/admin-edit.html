@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+#@basePage()
+
+#define baseInfo()
+<base href="#(basePath)/page/admin/">
+<title>系统管理员密码修改</title>
+<link href="../../css/plugins/iCheck/square/green.css" rel="stylesheet">
+<link href="../../css/plugins/chosen/chosen.min.css" rel="stylesheet">
+#end
+
+#define body()
+<body class="wrapper wrapper-content animated fadeInRight">
+<div class="wrapper wrapper-content">
+    <div class="row">
+        <form class="form-horizontal" id="addForm" name="addForm">
+            <input type="hidden" name="id" id="id" value="#(Administrator.id)">
+            <div class="form-group">
+                <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                        style="color:red">*</span>请输入账户名</label>
+                <div class="col-sm-7 col-md-7 col-lg-7">
+                    <input type="text" class="form-control" name="account" id="account" value="#(Administrator.account)" required>
+                </div>
+            </div>
+            <div class="hr-line-dashed"></div>
+            <div class="form-group">
+                <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                        style="color:red">*</span>请输入新密码</label>
+                <div class="col-sm-7 col-md-7 col-lg-7">
+                    <input type="password" class="form-control" name="password" id="password" required>
+                </div>
+            </div>
+            <div class="hr-line-dashed"></div>
+            <div class="form-group">
+                <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                        style="color:red">*</span>请再次确认密码</label>
+                <div class="col-sm-7 col-md-7 col-lg-7">
+                    <input type="password" class="form-control" name="password_2" id="password_2" required>
+                </div>
+            </div>
+            <div class="hr-line-dashed"></div>
+            <div class="form-group">
+                <div class="col-md-7 col-sm-7 col-lg-7 col-sm-offset-3 col-md-offset-3 col-lg-offset-3">
+                    <button class="btn btn-primary btn-sm" id="editBtn" type="submit"><i
+                            class="fa fa-check"></i>&nbsp;确定
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+#end
+
+#define js()
+#@formJs()
+<script type="text/javascript" src="../../js/sha1.js"></script>
+<script type = "text/javascript">
+
+    //form提交事件
+    var $addForm = $("#addForm"),
+    $id = $("#id"),
+	$account = $("#account"),
+	$password = $("#password"),
+	$password_2 = $("#password_2");
+
+    var icon = "<i class='fa fa-times-circle'></i> ";
+
+    $addForm.validate({
+        rules: {
+        	id:"required",
+            account: {
+                required:true,
+                remote: {
+                    url: "../../admin/judgeAccount", //后台处理程序
+                    type: "post",               //数据发送方式
+                    dataType: "json",           //接受数据格式
+                    data: {                     //要传递的数据
+                        account: function () {
+                            return $account.val();
+                        }
+                    }
+                }
+            },
+            password: {
+                required: true
+              },
+            password_2: {
+                required: true,
+                equalTo: "#password"
+              }
+
+        },
+    messages: {
+        //对应name属性值
+        account: {
+            required: icon + "请输入账号名",
+            remote: icon + "该账号已存在"
+        },
+        num: {
+            password:  icon +"请输入密码"
+          },
+          password_2: {
+            required:  icon +"请再次确认密码",
+            equalTo:"确认密码与密码不同"
+          }
+       
+    },
+        submitHandler: function (form) {
+            var loading = layer.load(2, {
+                shade: [0.5, '#fff'] //0.1透明度的白色背景
+            });
+            $.ajax({
+                url: "../../admin/updateAdministrator",
+                method: "post",
+                data: {
+                	"id": $id.val(),
+                    "account": $account.val(),
+                    "password": sha1($password.val())
+                },
+                success: function (res) { // data 保存提交后返回的数据，一般为 json 数据
+                    layer.close(loading);
+                    if (res.code === 0) {
+                        //当在iframe页面关闭自身时，先得到当前iframe层的索引
+                        var index = parent.layer.getFrameIndex(window.name);
+                        //再执行关闭
+                        parent.layer.close(index);
+                    } else {
+                        alert("操作失败，请稍后重试！！");
+                    }
+                },
+                error: ajaxError
+            });
+            return false;
+        }
+    });
+
+</script>
+#end

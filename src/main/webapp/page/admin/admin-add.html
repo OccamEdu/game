@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+#@basePage()
+
+#define baseInfo()
+<base href="#(basePath)/page/admin/">
+<title>系统管理员添加</title>
+<link href="../../css/plugins/iCheck/square/green.css" rel="stylesheet">
+<link href="../../css/plugins/chosen/chosen.min.css" rel="stylesheet">
+#end
+
+#define body()
+<body class="wrapper wrapper-content animated fadeInRight">
+    <div class="wrapper wrapper-content">
+        <div class="row">
+            <form class="form-horizontal" id="addForm" name="addForm" action="../../admin/addAdministrator" method="post" enctype="multipart/form-data">
+            	<div class="form-group">
+                    <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                            style="color:red">*</span>头像</label>
+                    <div class="col-sm-7 col-md-7 col-lg-7">
+                        <input class = "form-control" type="file" name="icon" id="icon" onchange="getFileSize()">
+                        <input type = "hidden" name = "type" value = "1">
+                        <input type = "hidden" name = "size" id = "size">
+                    </div>
+                </div>
+                <div class="hr-line-dashed"></div>
+                <div class="form-group">
+                    <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                            style="color:red">*</span>账户名</label>
+                    <div class="col-sm-7 col-md-7 col-lg-7">
+                        <input type="text" class="form-control" name="account" id="account" required>
+                    </div>
+                </div>
+                <div class="hr-line-dashed"></div>
+                <div class="form-group">
+                    <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                            style="color:red">*</span>用户名</label>
+                    <div class="col-sm-7 col-md-7 col-lg-7">
+                        <input type="text" class="form-control" name="username" id="username" required>
+                    </div>
+                </div>
+                <div class="hr-line-dashed"></div>
+                <div class="form-group">
+                    <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                            style="color:red">*</span>密码</label>
+                    <div class="col-sm-7 col-md-7 col-lg-7">
+                        <input type="password" class="form-control" name="password" id="password" onchange="encrypt1()" required>
+                    </div>
+                </div>
+                <div class="hr-line-dashed"></div>
+                <div class="form-group">
+                    <label class="col-sm-3 col-md-3 col-lg-3 control-label"><span
+                            style="color:red">*</span>确认密码</label>
+                    <div class="col-sm-7 col-md-7 col-lg-7">
+                        <input type="password" class="form-control" name="password_2" id="password_2" onchange="encrypt2()" required>
+                    </div>
+                </div>
+                <div class="hr-line-dashed"></div>
+                <div class="form-group">
+                    <div class="col-md-7 col-sm-7 col-lg-7 col-sm-offset-3 col-md-offset-3 col-lg-offset-3">
+                        <button class="btn btn-primary btn-sm" id="editBtn" type="submit"><i
+                                class="fa fa-check"></i>&nbsp;确认添加
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+#end
+
+#define js()
+#@formJs()
+<script type="text/javascript" src="../../js/sha1.js"></script>
+<script type = "text/javascript">
+
+	function getFileSize() {
+	    document.getElementById("size").value = document.getElementById("icon").files[0].size;
+	}
+
+	function encrypt1() {
+	    var $password = $("#password");
+        document.getElementById("password").value = sha1($password.val());
+    }
+
+    function encrypt2() {
+        var $password_2 = $("#password_2");
+        document.getElementById("password_2").value = sha1($password_2.val());
+    }
+	
+    //form提交事件
+    var $addForm = $("#addForm"),
+        $account = $("#account");
+
+    var icon = "<i class='fa fa-times-circle'></i> ";
+
+    $addForm.validate({
+        rules: {
+            account: {
+                required:true,
+                remote: {
+                    url: "../../admin/judgeAccount", //后台处理程序
+                    type: "post",               //数据发送方式
+                    dataType: "json",           //接受数据格式
+                    data: {                     //要传递的数据
+                        account: function () {
+                            return $account.val();
+                        }
+                    }
+                }
+            },
+            username: "required",
+            password: {
+                required: true
+            },
+            password_2: {
+                required: true,
+                equalTo: "#password"
+            }
+
+        },
+        messages: {
+            //对应name属性值
+            username: icon + "请输入用户名",
+            account: {
+                required: icon + "请输入账号名",
+                remote: icon + "该账号已存在"
+            },
+            icon: {
+                accept: icon + "上传文件格式不是image"
+            },
+            password:  icon +"请输入密码",
+            password_2: {
+                required:  icon +"请再次确认密码",
+                equalTo: icon + "确认密码与密码不同"
+            }
+        },
+        submitHandler: function (form) {
+            var loading = layer.load(2, {
+                shade: [0.5, '#fff'] //0.1透明度的白色背景
+            });
+            $(form).ajaxSubmit({
+                success: function(res) { // data 保存提交后返回的数据，一般为 json 数据
+                    layer.close(loading);
+                    if (res.code === 0) {
+                        //当在iframe页面关闭自身时，先得到当前iframe层的索引
+                        var index = parent.layer.getFrameIndex(window.name);
+                        //再执行关闭
+                        parent.layer.close(index);
+                    } else {
+                        layer.msg('操作失败，请稍后重试！！', {anim: 6, time: 1000});
+                    }
+                },
+                error: ajaxError
+            });
+            return false;
+        }
+    });
+
+</script>
+#end
